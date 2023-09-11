@@ -2,6 +2,7 @@ In  this repo, I'm providing demo of complete installation of free5gc. Agenda fo
 
 ![image](https://github.com/devopsjourney23/free5gcdemo/assets/142556153/39cad0ad-d41a-4695-976c-7871178a1546)
 
+Youtube Video link to my hands-on demo -->   https://youtu.be/ZMGsWStz090
 
 1) Readiness of ubuntu linux for free5gc, 
 2) Installation of Container Runtime (Docker + Mirantis Container Runtime)
