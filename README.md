@@ -1,4 +1,4 @@
-#In  this repo, I'm providing demo of complete installation of free5gc. Agenda for this demo is as below.
+In  this repo, I'm providing demo of complete installation of free5gc. Agenda for this demo is as below.
 
 1) Readiness of ubuntu linux for free5gc, 
 2) Installation of Container Runtime (Docker + Mirantis Container Runtime)
@@ -6,23 +6,27 @@
 4) Finally free5gc installation and basic ue browsing test
 
 
-# Readiness of ubuntu linux for free5gc
+**Readiness of ubuntu linux for free5gc**
+
+```
 sudo su -
 apt-get install -y linux-image-generic
 apt install linux-headers-5.4.0-162-generic
 vi /etc/default/grub
-	GRUB_DEFAULT='Advanced options for Ubuntu>Ubuntu, with Linux 5.4.0-162-generic'
+        GRUB_DEFAULT='Advanced options for Ubuntu>Ubuntu, with Linux 5.4.0-162-generic'
 update-grub
 reboot
 apt install curl git make gcc -y
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
+```
 
+**Installation of Container Runtime**
 
-#Installation of Container Runtime 
+```
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-swapoff -a 
+swapoff -a
 mount -a
 free -h
 
@@ -43,12 +47,16 @@ net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
 EOF
+```
 
-** Apply sysctl params without reboot**
+ Apply sysctl params without reboot
+```
 sysctl --system
 sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+```
 
-** Install Docker CRI**
+Install Docker Engine
+```
 apt-get update
 apt-get install ca-certificates curl gnupg -y
 install -m 0755 -d /etc/apt/keyrings
@@ -66,8 +74,10 @@ newgrp docker
 docker run hello-world
 systemctl enable docker.service
 systemctl enable containerd.service
+```
 
-** Install Mirantis Container Runtime**
+Install Mirantis Container Runtime
+```
 VER=$(curl -s https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest|grep tag_name | cut -d '"' -f 4|sed 's/v//g')
 echo $VER
 wget https://github.com/Mirantis/cri-dockerd/releases/download/v${VER}/cri-dockerd-${VER}.amd64.tgz
@@ -82,9 +92,11 @@ systemctl daemon-reload
 systemctl enable cri-docker.service
 systemctl enable --now cri-docker.socket
 systemctl status cri-docker.socket
+```
 
+**Baremetal deployment of k8s cluster**
 
-# Baremetal deployment of k8s cluster
+```
 apt-get update
 apt-get install -y apt-transport-https ca-certificates curl
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -121,18 +133,21 @@ echo 'source <(kubectl completion bash)' >>~/.bashrc
 echo 'alias k=kubectl' >>~/.bashrc
 echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
 source .bashrc
+```
 
+**Installing Free5GC**
 
-# Free5gc installation and ue browsing test
-
-** Building gtp5g module**
+Building gtp5g module
+```
 git clone https://github.com/free5gc/gtp5g.git
 cd gtp5g
 make
 make install
+```
 
+```
 cd /root/ ; mkdir kubedata
-mkdir /root/5gc ; cd /root/5gc 
+mkdir /root/5gc ; cd /root/5gc
 helm repo add towards5gs 'https://raw.githubusercontent.com/Orange-OpenSource/towards5gs-helm/main/repo/'
 helm repo update
 helm search repo
@@ -162,7 +177,10 @@ spec:
           operator: In
           values:
           - <nodename>
-------------
+```
+
+Deploying Helm Charts
+```
 tar -zxvf ueransim-2.0.17.tgz
 tar -zxvf free5gc-1.1.7.tgz
 kubectl create ns up
@@ -187,9 +205,11 @@ helm upgrade --install controlplane -n cp \
 --set global.n9network.masterIf=ens33 \
 free5gc
 
-** Login to webinterface and create UE** 
+** Login to webinterface and create UE**
 
 helm upgrade --install an -n an \
 --set global.n2network.masterIf=ens33 \
 --set global.n3network.masterIf=ens33 \
 ueransim
+```
+
