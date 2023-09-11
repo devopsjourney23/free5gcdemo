@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: v3.2.6
+description: A Helm chart to deploy UERANSIM
+icon: https://raw.githubusercontent.com/aligungr/UERANSIM/master/.github/logo.png
+maintainers:
+- email: abderaouf.khichane@orange.com
+  name: Abderaouf KHICHANE
+name: ueransim
+version: 2.0.17

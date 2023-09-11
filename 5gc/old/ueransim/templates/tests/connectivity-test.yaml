@@ -1,0 +1,106 @@
+#
+# Software Name : towards5gs-helm
+# SPDX-FileCopyrightText: Copyright (c) 2021 Orange
+# SPDX-License-Identifier: Apache-2.0
+#
+# This software is distributed under the Apache License 2.0,
+# the text of which is available at todo
+# or see the "LICENSE" file for more details.
+#
+# Author: Abderaouf KHICHANE, Ilhem FAJJARI, Ayoub BOUSSELMI, Michal CHABIERA
+# Software description: An open-source project providing Helm charts to deploy 5G components (Core + RAN) on top of Kubernetes
+#
+{{- if .Values.ue.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "ueransim.fullname" . }}-test-connection
+  annotations:
+    "helm.sh/hook": test
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "ueransim.fullname" . }}-test-connection
+  annotations:
+    "helm.sh/hook": test
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["get", "create"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "ueransim.fullname" . }}-test-connection
+  annotations:
+    "helm.sh/hook": test
+subjects:
+- kind: ServiceAccount
+  name: {{ include "ueransim.fullname" . }}-test-connection
+  namespace: {{ $.Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "ueransim.fullname" . }}-test-connection
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.ue.test.connectivity.configmap.name }}
+  annotations:
+    "helm.sh/hook": test
+data:
+  script-connectivity-test.sh: |
+    #!/bin/bash
+    echo "Get ue pod name"
+    export pod_name=$(kubectl get pods --namespace {{ $.Release.Namespace }} -l "component={{ .Values.ue.name }}" -o jsonpath="{.items[0].metadata.name}")
+    echo "${pod_name}"
+    echo "***********************************************************************"
+    echo ""
+
+    echo "Get ip address table for ${pod_name}"
+    ip_address="$(kubectl -n {{ $.Release.Namespace }} exec -i ${pod_name} -- bash -c 'ip address')"
+    echo "${ip_address}"
+    tun_interface="$(echo "$ip_address" | awk '$1 ~ /^[0-9].*/ && $2 ~/^uesimtun0/ {print}')"
+    if [ -z "$tun_interface" ] ; then
+      echo ""
+      echo "uesimtun0 interface not found"
+      exit 1
+    fi
+    echo "***********************************************************************"
+    echo ""
+
+    echo "Test connectivity"
+    kubectl -n {{ $.Release.Namespace }} exec -i ${pod_name} -- curl --interface uesimtun0 www.google.com
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "ueransim.fullname" . }}-test-connection"
+  labels:
+    {{- include "ueransim.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+      serviceAccountName: {{ include "ueransim.fullname" . }}-test-connection
+      containers:
+      - name: ue-test-conncection
+        image: {{ .Values.ue.test.connectivity.image }}
+        imagePullPolicy: IfNotPresent
+        command: ["bin/sh"]
+        args: ["/scripts/script-connectivity-test.sh"]
+        volumeMounts:
+        - name: {{ .Values.ue.test.connectivity.volume.name }}
+          mountPath: {{ .Values.ue.test.connectivity.volume.mount }}
+          readOnly: true
+      volumes:
+      - name: {{ .Values.ue.test.connectivity.volume.name }}
+        configMap:
+          defaultMode: 0755
+          name: {{ .Values.ue.test.connectivity.configmap.name }}
+      restartPolicy: Never
+{{- end }}
