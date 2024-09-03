@@ -191,6 +191,7 @@ kubectl create ns up
 kubectl create ns cp
 kubectl create ns an
 
+cd /root/5gc/free5gc/charts/
 helm install userplane -n up \
 --set global.n4network.masterIf=ens33 \
 --set global.n3network.masterIf=ens33 \
@@ -200,6 +201,7 @@ helm install userplane -n up \
 --set upf.n6if.ipAddress="10.100.60.112" \
 free5gc-upf
 
+cd /root/5gc/
 helm upgrade --install controlplane -n cp \
 --set deployUPF=false \
 --set global.n2network.masterIf=ens33 \
@@ -210,6 +212,8 @@ helm upgrade --install controlplane -n cp \
 free5gc
 
 ** Login to webinterface and create UE**
+http://<nodeip>:30500/
+Credentials: admin/free5gc
 
 helm upgrade --install an -n an \
 --set global.n2network.masterIf=ens33 \
