@@ -203,7 +203,7 @@ free5gc-upf
 
 cd /root/5gc/
 helm upgrade --install controlplane -n cp \
---set deployUPF=false \
+--set deployUpf=false \
 --set global.n2network.masterIf=ens33 \
 --set global.n3network.masterIf=ens33 \
 --set global.n4network.masterIf=ens33 \
