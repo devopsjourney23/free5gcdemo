@@ -143,7 +143,7 @@ source .bashrc
 
 Building gtp5g module
 ```
-git clone https://github.com/free5gc/gtp5g.git
+git clone -b v0.8.10 https://github.com/free5gc/gtp5g.git
 cd gtp5g
 make
 make install
